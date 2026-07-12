@@ -1,12 +1,12 @@
 # N30NC0R3_AI
 Tryna make an ai from basically scratch, on python and coming soon .apk support and .exe support and .appimage support.
 
-**`anshlabs716` and me, `shozanthebozan`, are in this, this ai can be run anywhere with a terminal, all the required dependences and python 3! Right now this thing can recognise image proportions (size in pixels), tell the local time on your computer, search the internet for answsers (needs some work), do simple maths, all in your RAM! Keep visiting us for more changes.**
+**`anshlabs716` and me, `shozanthebozan`, are in this. Read the MIGRATION_SUMMARY and ALL_MARKDOWN for more info
 
-#  EXTERNAL DEPENDENCES
-* `TextBlob and pillow`
+#  Dependences
+* tkinter
+* python 3
 
-* (Other things are imported too, but they are usually already provided with standard python 3 installations.)
 
 **Contact me, `shozanthebozan`, at `kmoruihrdp@hotmail.com or for anshlabs716 (ansh bhatia) bhatiaansh716@gmail.com or my discord veryfastcar2_07525`**
 
