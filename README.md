@@ -3,9 +3,9 @@
 > **An AI assistant built from scratch in Python**
 > *By AnshLabs716 & shozanthebozan*
 
-[![Python](https://img.shields.io/badge/python-3.6%2B-yellow)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-green)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Platform](https://img.shields.io/badge/platform-Linux-orange)](https://github.com/anshlabs716/N30NC0R3_AI)
+[![Python](https://img.shields.io/badge/Python-3.6%2B-yellow?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Platform](https://img.shields.io/badge/Platform-Linux-orange?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/anshlabs716/N30NC0R3_AI)
 [![Bash](https://img.shields.io/badge/Shell-Bash-4EAA25?style=for-the-badge&logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/)
 ---
 
