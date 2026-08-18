@@ -3,11 +3,10 @@
 > **An AI assistant built from scratch in Python**
 > *By AnshLabs716 & shozanthebozan*
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/anshlabs716/N30NC0R3_AI)
 [![Python](https://img.shields.io/badge/python-3.6%2B-yellow)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Platform](https://img.shields.io/badge/platform-Linux-orange)](https://github.com/anshlabs716/N30NC0R3_AI)
-
+[![Bash](https://img.shields.io/badge/Shell-Bash-4EAA25?style=for-the-badge&logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/)
 ---
 
 ## 📌 About
