@@ -1,7 +1,9 @@
 # 🧠 N30NC0R3_AI
 
 <img width="1365" height="713" alt="Screenshot_20260819_183902" src="https://github.com/user-attachments/assets/1ae7556d-f648-49b1-9bad-5a74b52464c1" />
-
+this is the gui
+<img width="1365" height="717" alt="Screenshot_20260819_185737" src="https://github.com/user-attachments/assets/4e5ca0a6-259c-41ac-90d7-ff3e3281bac5" />
+this is the cli
 > **An AI assistant built from scratch in Python**
 > *By AnshLabs716 & shozanthebozan*
 
