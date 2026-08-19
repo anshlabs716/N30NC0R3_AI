@@ -4,6 +4,7 @@
 this is the gui
 <img width="1365" height="717" alt="Screenshot_20260819_185737" src="https://github.com/user-attachments/assets/4e5ca0a6-259c-41ac-90d7-ff3e3281bac5" />
 this is the cli
+
 > **An AI assistant built from scratch in Python**
 > *By AnshLabs716 & shozanthebozan*
 
