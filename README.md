@@ -1,5 +1,7 @@
 # 🧠 N30NC0R3_AI
 
+<img width="1365" height="713" alt="Screenshot_20260819_183902" src="https://github.com/user-attachments/assets/1ae7556d-f648-49b1-9bad-5a74b52464c1" />
+
 > **An AI assistant built from scratch in Python**
 > *By AnshLabs716 & shozanthebozan*
 
