@@ -420,12 +420,12 @@ N30NC0R3_AI/
 * [ ] 📱 Android `.apk`
 * [ ] 🪟 Windows `.exe`
 * [ ] 🐧 Linux `.AppImage`
-* [ ] 🖥️ Tkinter GUI
+* [x] 🖥️ Tkinter GUI
 * [ ] 🎤 Voice input/output
 * [ ] 🧠 More knowledge topics
 * [ ] 🔌 Custom plugin system
-* [ ] ⚙️ More commands
-* [ ] 💾 Persistent conversation history
+* [X] ⚙️ More commands
+* [X] 💾 Persistent conversation history (if done correctly)
 
 ---
 
