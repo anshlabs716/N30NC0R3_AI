@@ -14,6 +14,44 @@ this is the cli
 [![Bash](https://img.shields.io/badge/Shell-Bash-4EAA25?style=for-the-badge&logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/)
 ---
 
+## 📑 Table of Contents
+
+- [📌 About](#-about)
+  - [✨ Highlights](#-highlights)
+- [🚀 Features](#-features)
+- [🧠 Natural Language Understanding](#-natural-language-understanding)
+- [📚 Knowledge Base](#-knowledge-base)
+- [🌐 Web Integration](#-web-integration)
+  - [DuckDuckGo](#duckduckgo)
+  - [Wikipedia](#wikipedia)
+- [🎮 Entertainment](#-entertainment)
+  - [😂 Jokes](#-jokes)
+  - [💡 Quotes](#-quotes)
+  - [🎲 Dice](#-dice)
+  - [🪙 Coin Flip](#-coin-flip)
+- [🔐 Password Generator](#-password-generator)
+- [🖥️ Terminal Interface](#-terminal-interface)
+- [Python](#python)
+- [Python Dependencies](#python-dependencies)
+- [Optional Dependencies](#optional-dependencies)
+- [🐚 Option 1 — Terminal Version](#-option-1-terminal-version)
+- [🐍 Option 2 — Python Version](#-option-2-python-version)
+- [💬 Example Session](#-example-session)
+  - [Coming Soon](#coming-soon)
+- [1. Fork the Repository](#1-fork-the-repository)
+- [2. Clone Your Fork](#2-clone-your-fork)
+- [3. Create a Feature Branch](#3-create-a-feature-branch)
+- [4. Make Your Changes](#4-make-your-changes)
+- [5. Commit](#5-commit)
+- [6. Push](#6-push)
+  - [Example](#example)
+- [[1.0.0] — 2026-08-17](#100-2026-08-17)
+  - [Added](#added)
+  - [Planned](#planned)
+- [v0.1 → v1.0](#v01-v10)
+  - [Migration](#migration)
+  - [New Dependencies](#new-dependencies)
+
 ## 📌 About
 
 **N30NC0R3_AI** is a terminal-based AI assistant built from scratch using **Python and Bash**.
