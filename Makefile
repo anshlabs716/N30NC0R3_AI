@@ -25,7 +25,10 @@ all: $(TARGET)
 $(TARGET): $(OBJS) $(LLAMA_STAMP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LLAMA_LIBS) $(LDLIBS)
 
-%.o: %.c
+# Object files include headers from llama.cpp, so that folder must be
+# fetched and built first. The "|" makes it an order-only prerequisite:
+# it must exist before compiling, but changing it does not force a rebuild.
+%.o: %.c | $(LLAMA_STAMP)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(LLAMA_STAMP):

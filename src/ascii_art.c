@@ -132,6 +132,7 @@ char* text_to_ascii(const char *text, int width) {
 }
 
 char* generate_ascii_art(const char *text, const char *style, int width, int height, int color) {
+    (void)style;  /* style is reserved for future use */
     char *base = text_to_ascii(text, width);
     char *result = calloc(ASCII_MAX_WIDTH * ASCII_MAX_HEIGHT * 2, sizeof(char));
     result[0] = '\0';
