@@ -12,7 +12,7 @@
 #include "settings.h"
 
 /*
- * NEON CORE AI v3.0
+ * neoncore v3.0
  * -----------------
  * Entry point. Initialises GTK, loads settings and the local language
  * model, then hands control to the GUI.
@@ -33,9 +33,9 @@ int main(int argc, char *argv[]) {
 
     /* Try to load the local model; the app works offline without it. */
     if (!llm_init()) {
-        fprintf(stderr, "[neon_core] No model available - running in offline mode.\n");
+        fprintf(stderr, "[neoncore] No model available - running in offline mode.\n");
     } else {
-        fprintf(stderr, "[neon_core] Model backend: %s\n", llm_backend_name());
+        fprintf(stderr, "[neoncore] Model backend: %s\n", llm_backend_name());
     }
 
     ui_init(settings);

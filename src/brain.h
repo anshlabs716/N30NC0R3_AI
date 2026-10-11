@@ -15,7 +15,7 @@ extern "C"
 #include <math.h>
 
 /*
- * Intent router for NEON CORE AI.
+ * Intent router for neoncore.
  *
  * The router matches user input against an ordered list of structural
  * (POSIX ERE) patterns. Simple intents are answered locally from the

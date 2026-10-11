@@ -372,7 +372,7 @@ IntentResult brain_route(const char *input) {
     /* 3. Conversational -------------------------------------------------- */
     if (regex_match("^[[:space:]]*(hi|hello|hey|yo|hiya|howdy|sup|greetings)\\b", input)) {
         r.type = INTENT_GREETING;
-        set_text(&r, "Hello! I'm NEON, your AI assistant. How can I help?");
+        set_text(&r, "Hello! I'm neoncore, your AI assistant. How can I help?");
         return r;
     }
     if (regex_match("\\b(bye|goodbye|farewell|see you|see ya|good night)\\b", input)) {
@@ -382,7 +382,7 @@ IntentResult brain_route(const char *input) {
     }
     if (regex_match("(who are you|what('| a)?re? (is )?your name|your name)", input)) {
         r.type = INTENT_NAME_ASK;
-        set_text(&r, "I'm NEON CORE AI v3.0. What should I call you?");
+        set_text(&r, "I'm neoncore v3.0. What should I call you?");
         return r;
     }
     if (regex_match("(my name is|i am|i'm|call me)[[:space:]]+[A-Za-z]", input)) {

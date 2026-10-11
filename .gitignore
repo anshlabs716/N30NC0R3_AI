@@ -1,6 +1,6 @@
 # Build output
 *.o
-/neon_core
+/neoncore
 
 # llama.cpp is fetched and compiled here at build time
 /llama.cpp/

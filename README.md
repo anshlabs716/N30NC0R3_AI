@@ -1,8 +1,8 @@
-# NEON CORE AI v3.0
+# neoncore v3.0
 
 A C-based AI chat assistant with local LLM, web search, ASCII art, and TTS.
 
-NEON CORE AI is a native desktop chat assistant written entirely in C11. It
+neoncore is a native desktop chat assistant written entirely in C11. It
 runs a local large language model either directly through llama.cpp or through a
 local Ollama server, falls back to an embedded offline knowledge base for many
 queries, can search the web, renders coloured ASCII art, and speaks its replies
@@ -40,7 +40,7 @@ can take a few minutes. After that it is fast.
 **4. Start it**
 
 ```bash
-./neon_core
+./neoncore
 ```
 
 A window opens. That is the app.
@@ -50,7 +50,7 @@ A window opens. That is the app.
 The app needs a small AI model to think with. Easiest way: click the **Get LLM**
 button at the top of the window. It installs Ollama and downloads the AI model
 for you, showing progress. When it finishes, close the app and start it again
-with `./neon_core`.
+with `./neoncore`.
 
 Prefer to do it by hand? Install Ollama from <https://ollama.com>, then run:
 
@@ -129,7 +129,7 @@ built-in offline knowledge and local tools.
 - **ASCII art engine** with a built-in 7-row font, pattern generators and
   7-colour markers for the GUI.
 - **Text-to-speech** using libespeak-ng, with configurable rate and pitch.
-- **Session storage** persisted as JSON (atomic writes) in `~/.neon_core_ai/`.
+- **Session storage** persisted as JSON (atomic writes) in `~/.neoncore/`.
 - **12 colour themes** loaded from `assets/themes.json`.
 - **Reminders, to-dos and notes**, jokes, quotes, facts, poems, stories and
   "battle" generators.
@@ -157,12 +157,12 @@ make
 ```
 
 The first build fetches llama.cpp into `./llama.cpp`, compiles it, and then
-links the application. The result is the `neon_core` executable in the project
+links the application. The result is the `neoncore` executable in the project
 root. Run `make clean-llama` to remove the fetched llama.cpp and start over.
 
 ## Model setup
 
-NEON CORE AI uses whichever of two local backends it finds, in this order:
+neoncore uses whichever of two local backends it finds, in this order:
 
 1. **llama.cpp (direct).** Place a GGUF file in `models/`. The default expected
    filename is:
@@ -186,7 +186,7 @@ offline knowledge and local tools.
 ## Usage
 
 ```bash
-./neon_core
+./neoncore
 ```
 
 Type a message and press Enter (or click **Send**). Useful commands:
@@ -199,7 +199,7 @@ Type a message and press Enter (or click **Send**). Useful commands:
 | `generate a password 20`                                       | random password              |
 | `roll 2d20` / `flip a coin`                                    | dice / coin                  |
 | `remind me in 5 minutes to stretch`                            | reminder                     |
-| `ascii art of NEON` / `pattern diamond`                        | ASCII art                    |
+| `ascii art of neoncore` / `pattern diamond`                        | ASCII art                    |
 | `joke`, `quote`, `fact`, `poem`, `story`, `battle`             | content generators           |
 | `search for black holes`, `wikipedia ...`, `news`              | web-backed answers           |
 | anything else                                                  | routed to the local LLM      |
@@ -235,7 +235,7 @@ Yellow, the Soft Night family, Retro Terminal and Matrix.
 
 ## Configuration
 
-Settings and chat history are stored under `~/.neon_core_ai/`:
+Settings and chat history are stored under `~/.neoncore/`:
 
 - `settings.json` - theme, font size, ASCII style, personality, voice and
   reminder preferences.

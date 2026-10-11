@@ -7,7 +7,7 @@
 static void app_dir(char *out, size_t n) {
     const char *home = getenv("HOME");
     if (!home) home = "/tmp";
-    snprintf(out, n, "%s/.neon_core_ai", home);
+    snprintf(out, n, "%s/.neoncore", home);
 }
 
 static void ensure_app_dir(void) {
@@ -309,7 +309,7 @@ int settings_show_dialog(GtkWindow *parent, Settings *s) {
     refs.s = s;
 
     GtkWidget *dialog = gtk_dialog_new_with_buttons(
-        "NEON CORE Settings", parent,
+        "neoncore Settings", parent,
         GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
         "_Cancel", GTK_RESPONSE_CANCEL,
         "_Save", GTK_RESPONSE_ACCEPT, NULL);

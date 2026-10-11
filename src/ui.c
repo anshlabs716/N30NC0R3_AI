@@ -106,7 +106,7 @@ void ui_append_message(const char *role, const char *text) {
     char prefix[64];
     if (strcmp(role, "user") == 0) snprintf(prefix, sizeof(prefix), "You");
     else if (strcmp(role, "system") == 0) snprintf(prefix, sizeof(prefix), "System");
-    else snprintf(prefix, sizeof(prefix), "NEON");
+    else snprintf(prefix, sizeof(prefix), "neoncore");
 
     gtk_text_buffer_insert_with_tags_by_name(buf, &end, prefix, -1, "role", NULL);
     if (app_ui->settings && app_ui->settings->show_timestamps) {
@@ -138,7 +138,7 @@ void ui_append_ascii(const char *text) {
     GtkTextIter end;
 
     gtk_text_buffer_get_end_iter(buf, &end);
-    gtk_text_buffer_insert_with_tags_by_name(buf, &end, "NEON", -1, "role", NULL);
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, "neoncore", -1, "role", NULL);
     gtk_text_buffer_get_end_iter(buf, &end);
     gtk_text_buffer_insert(buf, &end, ": \n", -1);
 
@@ -240,7 +240,7 @@ static void start_llm_stream(const char *prompt, int header_already_shown) {
     } else {
         GtkTextIter end;
         gtk_text_buffer_get_end_iter(app_ui->chat_buffer, &end);
-        gtk_text_buffer_insert_with_tags_by_name(app_ui->chat_buffer, &end, "NEON", -1, "role", NULL);
+        gtk_text_buffer_insert_with_tags_by_name(app_ui->chat_buffer, &end, "neoncore", -1, "role", NULL);
         gtk_text_buffer_get_end_iter(app_ui->chat_buffer, &end);
         gtk_text_buffer_insert(app_ui->chat_buffer, &end, ": ", -1);
     }
@@ -478,7 +478,7 @@ static void on_export_clicked(GtkWidget *widget, gpointer data) {
     GtkWidget *fc = gtk_file_chooser_dialog_new("Export chat",
         GTK_WINDOW(app_ui->window), GTK_FILE_CHOOSER_ACTION_SAVE,
         "_Cancel", GTK_RESPONSE_CANCEL, "_Save", GTK_RESPONSE_ACCEPT, NULL);
-    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(fc), "neon_chat.txt");
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(fc), "neoncore_chat.txt");
     GtkTextIter start, end;
     gtk_text_buffer_get_bounds(app_ui->chat_buffer, &start, &end);
     char *all = gtk_text_buffer_get_text(app_ui->chat_buffer, &start, &end, FALSE);
@@ -597,7 +597,7 @@ static gboolean setup_drain(gpointer data) {
         if (strncmp(line, "__SETUP_DONE__", 14) == 0) {
             int rc = atoi(line + 14);
             const char *msg = (rc == 0)
-                ? "\nDone. The model is ready - restart NEON CORE to use it.\n"
+                ? "\nDone. The model is ready - restart neoncore to use it.\n"
                 : "\nSetup finished with a non-zero exit code.\n";
             gtk_text_buffer_insert(buf, &end, msg, -1);
             finished = 1;
@@ -809,7 +809,7 @@ void ui_init(Settings *settings) {
         ui_set_status("Ready (no model - click Get LLM)");
     }
     ui_append_message("assistant",
-        "Welcome to NEON CORE AI v3.0! Ask me anything, or type 'help' for commands. "
+        "Welcome to neoncore v3.0! Ask me anything, or type 'help' for commands. "
         "If no model is set up yet, click \"Get LLM\" to install one.");
 
     gtk_widget_show_all(app_ui->window);

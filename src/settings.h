@@ -40,7 +40,7 @@ typedef struct {
     int  voice_pitch;
 } Settings;
 
-/* Load/save ~/.neon_core_ai/settings.json. */
+/* Load/save ~/.neoncore/settings.json. */
 Settings* settings_load(void);
 int       settings_save(Settings *s);
 

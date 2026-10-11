@@ -18,7 +18,7 @@ LLAMA_STAMP = $(LLAMA_BUILD)/.neon_built
 
 SRCS   = $(wildcard src/*.c)
 OBJS   = $(SRCS:.c=.o)
-TARGET = neon_core
+TARGET = neoncore
 
 all: $(TARGET)
 

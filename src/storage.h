@@ -37,7 +37,7 @@ typedef struct {
     int   next_id;
 } History;
 
-/* Load / save ~/.neon_core_ai/history.json (atomic write via rename). */
+/* Load / save ~/.neoncore/history.json (atomic write via rename). */
 History* storage_load(void);
 int      storage_save(History *h);
 void     storage_free(History *h);
@@ -55,7 +55,7 @@ int   storage_add_message(Chat *c, const char *role, const char *text);
 int   storage_export_chat(Chat *c, const char *path);
 Chat* storage_import_chat(History *h, const char *path);
 
-/* The on-disk directory (~/.neon_core_ai). */
+/* The on-disk directory (~/.neoncore). */
 void  storage_dir(char *out, size_t n);
 
 #ifdef __cplusplus

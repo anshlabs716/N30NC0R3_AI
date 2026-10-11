@@ -9,7 +9,7 @@
 void storage_dir(char *out, size_t n) {
     const char *home = getenv("HOME");
     if (!home) home = "/tmp";
-    snprintf(out, n, "%s/.neon_core_ai", home);
+    snprintf(out, n, "%s/.neoncore", home);
 }
 
 static void ensure_dir(void) {
@@ -297,7 +297,7 @@ Chat* storage_import_chat(History *h, const char *path) {
         char *colon = strchr(line, ':');
         if (colon) {
             char role[64] = "user";
-            if (strstr(line, "NEON") || strstr(line, "assistant")) snprintf(role, sizeof(role), "assistant");
+            if (strstr(line, "neoncore") || strstr(line, "NEON") || strstr(line, "assistant")) snprintf(role, sizeof(role), "assistant");
             else if (strstr(line, "System")) snprintf(role, sizeof(role), "system");
             storage_add_message(c, role, colon + 1);
         } else {

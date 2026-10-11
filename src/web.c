@@ -126,7 +126,7 @@ char* web_search(const char *query) {
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 15L);
     curl_easy_setopt(curl, CURLOPT_USERAGENT,
-                     "Mozilla/5.0 (X11; Linux x86_64) NEON-CORE/3.0");
+                     "Mozilla/5.0 (X11; Linux x86_64) neoncore/3.0");
 
     CURLcode rc = curl_easy_perform(curl);
     curl_easy_cleanup(curl);

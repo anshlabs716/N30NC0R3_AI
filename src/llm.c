@@ -3,7 +3,7 @@
 #include <curl/curl.h>
 #include "cJSON.h"
 
-#define SYSTEM_PROMPT "You are NEON, a helpful AI assistant."
+#define SYSTEM_PROMPT "You are neoncore, a helpful AI assistant."
 #define MAX_HISTORY_MSGS 20
 
 /* Ollama endpoint and model used when no local GGUF is present. */
