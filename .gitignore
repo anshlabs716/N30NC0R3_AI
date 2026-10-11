@@ -1,0 +1,9 @@
+# Build output
+*.o
+/neon_core
+
+# llama.cpp is fetched and compiled here at build time
+/llama.cpp/
+
+# Downloaded models
+/models/*.gguf

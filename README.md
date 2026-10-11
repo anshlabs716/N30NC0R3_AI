@@ -3,13 +3,17 @@
 A C-based AI chat assistant with local LLM, web search, ASCII art, and TTS.
 
 NEON CORE AI is a native desktop chat assistant written entirely in C11. It
-runs a local large language model through llama.cpp, falls back to an embedded
-offline knowledge base for many queries, can search the web, renders coloured
-ASCII art, and speaks its replies aloud.
+runs a local large language model either directly through llama.cpp or through a
+local Ollama server, falls back to an embedded offline knowledge base for many
+queries, can search the web, renders coloured ASCII art, and speaks its replies
+aloud.
 
 ## Features
 
-- **Local LLM inference** via llama.cpp (Qwen3 1.7B Q4_K_M by default).
+- **Local LLM inference** via llama.cpp, with an automatic fallback to a local
+  Ollama server running Qwen3 1.7B.
+- **One-click LLM setup**: the **Get LLM** button installs Ollama and pulls
+  `qwen3:1.7b`, streaming the installer output in a dialog.
 - **Intent router** built on POSIX regular expressions that answers common
   requests locally and forwards open-ended ones to the model.
 - **GTK 3 interface** with a header bar, session sidebar, chat view and status
@@ -26,14 +30,15 @@ ASCII art, and speaks its replies aloud.
 
 ## Dependencies
 
-| Library      | Purpose                     | Typical package            |
-|--------------|-----------------------------|----------------------------|
-| llama.cpp    | Local LLM inference         | fetched by the Makefile    |
-| GTK 3        | Graphical interface         | `libgtk-3-dev`             |
-| libcurl      | Web search                  | `libcurl4-openssl-dev`     |
-| libespeak-ng | Text-to-speech              | `libespeak-ng-dev`         |
-| cJSON        | JSON parsing (embedded)     | bundled in `src/`          |
-| libc / libm  | Runtime and maths           | base system                |
+| Library      | Purpose                      | Typical package            |
+|--------------|------------------------------|----------------------------|
+| llama.cpp    | Direct local LLM inference   | fetched by the Makefile    |
+| Ollama       | Alternative local LLM server | installed by **Get LLM**   |
+| GTK 3        | Graphical interface          | `libgtk-3-dev`             |
+| libcurl      | Web search and Ollama HTTP   | `libcurl4-openssl-dev`     |
+| libespeak-ng | Text-to-speech               | `libespeak-ng-dev`         |
+| cJSON        | JSON parsing (embedded)      | bundled in `src/`          |
+| libc / libm  | Runtime and maths            | base system                |
 
 You also need a C11 compiler (`gcc`), `make`, `pkg-config` and `cmake` (used to
 build llama.cpp).
@@ -44,20 +49,32 @@ build llama.cpp).
 make
 ```
 
-The first build fetches llama.cpp, compiles it, and then links the application.
-The result is the `neon_core` executable in the project root.
+The first build fetches llama.cpp into `./llama.cpp`, compiles it, and then
+links the application. The result is the `neon_core` executable in the project
+root. Run `make clean-llama` to remove the fetched llama.cpp and start over.
 
 ## Model setup
 
-Place a GGUF model in `models/`. The default expected filename is:
+NEON CORE AI uses whichever of two local backends it finds, in this order:
 
-```
-models/qwen3-1.7b-q4_k_m.gguf
-```
+1. **llama.cpp (direct).** Place a GGUF file in `models/`. The default expected
+   filename is:
 
-The loader also accepts `models/Qwen3-1.7B-Q4_K_M.gguf` and
-`models/Qwen3-1.7B-Q4_K_M-00001-of-00001.gguf`. If no model is present the
-assistant still runs, using its embedded offline knowledge and local tools.
+   ```
+   models/qwen3-1.7b-q4_k_m.gguf
+   ```
+
+   The loader also accepts `models/Qwen3-1.7B-Q4_K_M.gguf` and
+   `models/Qwen3-1.7B-Q4_K_M-00001-of-00001.gguf`.
+
+2. **Ollama.** If no GGUF is present, the app looks for a local Ollama server
+   at `http://127.0.0.1:11434` with the `qwen3:1.7b` model pulled. You can set
+   this up entirely from the app: click the **Get LLM** button in the header
+   bar. It runs the Ollama installer and `ollama pull qwen3:1.7b`, streaming
+   the progress into a dialog. Restart the app afterwards.
+
+If neither backend is available the assistant still runs, using its embedded
+offline knowledge and local tools.
 
 ## Usage
 
@@ -94,7 +111,7 @@ Type a message and press Enter (or click **Send**). Useful commands:
     ├── main.c          application entry point
     ├── ui.c / ui.h     GTK layout, chat rendering, session list, themes
     ├── brain.c / .h    intent router, knowledge base, content libraries
-    ├── llm.c / .h      llama.cpp model loading, sampling and streaming
+    ├── llm.c / .h      llama.cpp and Ollama backends, sampling and streaming
     ├── web.c / .h      DuckDuckGo search and HTML parsing
     ├── ascii_art.c/.h  font, ASCII art and pattern generation
     ├── tts.c / .h      libespeak-ng speech wrapper
@@ -113,9 +130,9 @@ Yellow, the Soft Night family, Retro Terminal and Matrix.
 
 Settings and chat history are stored under `~/.neon_core_ai/`:
 
-- `settings.json` – theme, font size, ASCII style, personality, voice and
+- `settings.json` - theme, font size, ASCII style, personality, voice and
   reminder preferences.
-- `history.json` – chat sessions and their messages.
+- `history.json` - chat sessions and their messages.
 
 ## License
 

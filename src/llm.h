@@ -30,6 +30,9 @@ char* llm_generate_sync(const char *prompt);
 /* 1 if a model is currently loaded, otherwise 0. */
 int llm_is_loaded(void);
 
+/* Name of the active backend: "llama.cpp", "ollama" or "none". */
+const char* llm_backend_name(void);
+
 /* Drop the rolling conversation window used for context. */
 void llm_reset_history(void);
 

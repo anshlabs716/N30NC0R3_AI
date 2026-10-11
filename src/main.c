@@ -33,9 +33,9 @@ int main(int argc, char *argv[]) {
 
     /* Try to load the local model; the app works offline without it. */
     if (!llm_init()) {
-        fprintf(stderr, "[neon_core] No GGUF model found in ./models/ - running in offline mode.\n");
+        fprintf(stderr, "[neon_core] No model available - running in offline mode.\n");
     } else {
-        fprintf(stderr, "[neon_core] Model loaded.\n");
+        fprintf(stderr, "[neon_core] Model backend: %s\n", llm_backend_name());
     }
 
     ui_init(settings);

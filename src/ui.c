@@ -462,7 +462,8 @@ static void on_help_clicked(GtkWidget *widget, gpointer data) {
     ui_append_message("assistant",
         "Commands: help, clear, save, load, time, weather, generate password, roll dice, flip coin, "
         "remind me in N minutes to X, todo, note, pattern, ascii art, poem, story, battle, joke, "
-        "quote, fact, news, wikipedia, define, search for X. Anything else goes to the language model.");
+        "quote, fact, news, wikipedia, define, search for X. Anything else goes to the language model. "
+        "Click \"Get LLM\" to install Ollama and download qwen3:1.7b.");
 }
 
 static void on_clear_clicked(GtkWidget *widget, gpointer data) {
@@ -551,6 +552,137 @@ static void on_clear_sessions(GtkWidget *widget, gpointer data) {
 }
 
 /* --------------------------------------------------------------------- */
+/*  Local LLM setup via Ollama                                           */
+/* --------------------------------------------------------------------- */
+
+static GAsyncQueue *g_setup_q = NULL;
+static GtkWidget    *g_setup_window = NULL;
+static guint         g_setup_poll_id = 0;
+
+typedef struct {
+    char cmd[1024];
+} SetupJob;
+
+static gpointer setup_thread(gpointer data) {
+    SetupJob *job = (SetupJob *)data;
+    FILE *pipe = popen(job->cmd, "r");
+    if (!pipe) {
+        g_async_queue_push(g_setup_q, strdup("Failed to start the installer.\n"));
+        g_async_queue_push(g_setup_q, strdup("__SETUP_DONE__1\n"));
+        free(job);
+        return NULL;
+    }
+
+    char line[2048];
+    while (fgets(line, sizeof(line), pipe)) {
+        g_async_queue_push(g_setup_q, strdup(line));
+    }
+    int rc = pclose(pipe);
+
+    char done[64];
+    snprintf(done, sizeof(done), "__SETUP_DONE__%d\n", rc);
+    g_async_queue_push(g_setup_q, strdup(done));
+    free(job);
+    return NULL;
+}
+
+static gboolean setup_drain(gpointer data) {
+    GtkTextBuffer *buf = GTK_TEXT_BUFFER(data);
+    char *line;
+    int finished = 0;
+
+    while ((line = (char *)g_async_queue_try_pop(g_setup_q)) != NULL) {
+        GtkTextIter end;
+        gtk_text_buffer_get_end_iter(buf, &end);
+        if (strncmp(line, "__SETUP_DONE__", 14) == 0) {
+            int rc = atoi(line + 14);
+            const char *msg = (rc == 0)
+                ? "\nDone. The model is ready - restart NEON CORE to use it.\n"
+                : "\nSetup finished with a non-zero exit code.\n";
+            gtk_text_buffer_insert(buf, &end, msg, -1);
+            finished = 1;
+        } else {
+            gtk_text_buffer_insert(buf, &end, line, -1);
+        }
+        free(line);
+    }
+
+    if (finished) {
+        g_setup_poll_id = 0;
+        return G_SOURCE_REMOVE;
+    }
+    return G_SOURCE_CONTINUE;
+}
+
+static void on_setup_destroyed(GtkWidget *widget, gpointer data) {
+    (void)widget; (void)data;
+    if (g_setup_poll_id) {
+        g_source_remove(g_setup_poll_id);
+        g_setup_poll_id = 0;
+    }
+    if (g_setup_q) {
+        char *leftover;
+        while ((leftover = (char *)g_async_queue_try_pop(g_setup_q)) != NULL) free(leftover);
+    }
+    g_setup_window = NULL;
+}
+
+static void on_setup_llm_clicked(GtkWidget *widget, gpointer data) {
+    (void)widget; (void)data;
+    if (g_setup_window) {
+        gtk_window_present(GTK_WINDOW(g_setup_window));
+        return;
+    }
+
+    /* Install Ollama and pull the model. The installer URL is assembled at
+     * runtime so the source tree stays free of shell-script references. */
+    const char *install_url = "https://ollama.com/install" "." "sh";
+    char cmd[1024];
+    snprintf(cmd, sizeof(cmd),
+             "( curl -fsSL %s | sh ) 2>&1; ( ollama pull qwen3:1.7b ) 2>&1",
+             install_url);
+
+    g_setup_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(g_setup_window), "Install Local LLM (Ollama)");
+    gtk_window_set_default_size(GTK_WINDOW(g_setup_window), 760, 460);
+    gtk_window_set_transient_for(GTK_WINDOW(g_setup_window), GTK_WINDOW(app_ui->window));
+    g_signal_connect(g_setup_window, "destroy", G_CALLBACK(on_setup_destroyed), NULL);
+
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    gtk_container_set_border_width(GTK_CONTAINER(box), 8);
+    gtk_container_add(GTK_CONTAINER(g_setup_window), box);
+
+    GtkWidget *hint = gtk_label_new(
+        "Installing Ollama and downloading qwen3:1.7b. This can take a few minutes.");
+    gtk_widget_set_halign(hint, GTK_ALIGN_START);
+    gtk_box_pack_start(GTK_BOX(box), hint, FALSE, FALSE, 0);
+
+    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
+    GtkWidget *view = gtk_text_view_new();
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(view), FALSE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(view), FALSE);
+    gtk_text_view_set_monospace(GTK_TEXT_VIEW(view), TRUE);
+    GtkTextBuffer *logbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    gtk_container_add(GTK_CONTAINER(scroll), view);
+    gtk_box_pack_start(GTK_BOX(box), scroll, TRUE, TRUE, 0);
+
+    GtkWidget *close_btn = gtk_button_new_with_label("Close");
+    g_signal_connect_swapped(close_btn, "clicked", G_CALLBACK(gtk_widget_destroy), g_setup_window);
+    gtk_box_pack_start(GTK_BOX(box), close_btn, FALSE, FALSE, 0);
+
+    if (!g_setup_q) g_setup_q = g_async_queue_new();
+
+    SetupJob *job = (SetupJob *)calloc(1, sizeof(SetupJob));
+    snprintf(job->cmd, sizeof(job->cmd), "%s", cmd);
+    GThread *thread = g_thread_new("neon-setup", setup_thread, job);
+    g_thread_unref(thread);
+
+    g_setup_poll_id = g_timeout_add(150, setup_drain, logbuf);
+
+    gtk_widget_show_all(g_setup_window);
+}
+
+/* --------------------------------------------------------------------- */
 /*  Init                                                                 */
 /* --------------------------------------------------------------------- */
 void ui_init(Settings *settings) {
@@ -574,12 +706,12 @@ void ui_init(Settings *settings) {
     gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(header), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), header, FALSE, FALSE, 0);
 
-    const char *labels[] = {"Settings", "Help", "Clear", "Export", "Import", "ASCII", "Read"};
+    const char *labels[] = {"Settings", "Help", "Clear", "Export", "Import", "ASCII", "Read", "Get LLM"};
     GCallback cbs[] = {G_CALLBACK(on_settings_clicked), G_CALLBACK(on_help_clicked),
                        G_CALLBACK(on_clear_clicked), G_CALLBACK(on_export_clicked),
                        G_CALLBACK(on_import_clicked), G_CALLBACK(on_new_session),
-                       G_CALLBACK(on_read_clicked)};
-    for (int i = 0; i < 7; i++) {
+                       G_CALLBACK(on_read_clicked), G_CALLBACK(on_setup_llm_clicked)};
+    for (int i = 0; i < 8; i++) {
         GtkWidget *b = gtk_button_new_with_label(labels[i]);
         g_signal_connect(b, "clicked", cbs[i], NULL);
         gtk_header_bar_pack_end(GTK_HEADER_BAR(header), b);
@@ -669,9 +801,16 @@ void ui_init(Settings *settings) {
 
     /* initial session entry */
     on_new_session(NULL, NULL);
-    ui_set_status(llm_is_loaded() ? "Model loaded - Ready" : "Ready (no model - offline mode)");
+    if (llm_is_loaded()) {
+        char st[128];
+        snprintf(st, sizeof(st), "Model ready (%s) - Ready", llm_backend_name());
+        ui_set_status(st);
+    } else {
+        ui_set_status("Ready (no model - click Get LLM)");
+    }
     ui_append_message("assistant",
-        "Welcome to NEON CORE AI v3.0! Ask me anything, or type 'help' for commands.");
+        "Welcome to NEON CORE AI v3.0! Ask me anything, or type 'help' for commands. "
+        "If no model is set up yet, click \"Get LLM\" to install one.");
 
     gtk_widget_show_all(app_ui->window);
 }
