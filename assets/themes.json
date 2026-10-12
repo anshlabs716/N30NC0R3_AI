@@ -1,0 +1,113 @@
+{
+  "themes": [
+    {
+      "name": "Neon Orange",
+      "bg": "#0d0a08",
+      "fg": "#ff8c42",
+      "bg2": "#1a120a",
+      "accent": "#ff6b35",
+      "error": "#ff4757",
+      "success": "#2ed573"
+    },
+    {
+      "name": "Neon Pink",
+      "bg": "#0f0a0d",
+      "fg": "#ff6b9d",
+      "bg2": "#1a0e13",
+      "accent": "#ff2d9a",
+      "error": "#ff4757",
+      "success": "#2ed573"
+    },
+    {
+      "name": "Neon Green",
+      "bg": "#0a0f0b",
+      "fg": "#39ff14",
+      "bg2": "#0d150e",
+      "accent": "#2ed573",
+      "error": "#ff4757",
+      "success": "#1dd1a1"
+    },
+    {
+      "name": "Neon Blue",
+      "bg": "#0a0d1a",
+      "fg": "#00f3ff",
+      "bg2": "#0f1425",
+      "accent": "#48dbfb",
+      "error": "#ff4757",
+      "success": "#1dd1a1"
+    },
+    {
+      "name": "Neon Red",
+      "bg": "#1a0a0a",
+      "fg": "#ff073a",
+      "bg2": "#250f0f",
+      "accent": "#ff2d55",
+      "error": "#ff4757",
+      "success": "#2ed573"
+    },
+    {
+      "name": "Neon Purple",
+      "bg": "#110a1a",
+      "fg": "#b664ff",
+      "bg2": "#171023",
+      "accent": "#9c88ff",
+      "error": "#ff4757",
+      "success": "#2ed573"
+    },
+    {
+      "name": "Neon Yellow",
+      "bg": "#1a180a",
+      "fg": "#ffff00",
+      "bg2": "#23200d",
+      "accent": "#ffd93d",
+      "error": "#ff4757",
+      "success": "#2ed573"
+    },
+    {
+      "name": "Soft Night Green",
+      "bg": "#0a0f0d",
+      "fg": "#a8e6cf",
+      "bg2": "#0d1512",
+      "accent": "#88d8b0",
+      "error": "#ff4757",
+      "success": "#1dd1a1"
+    },
+    {
+      "name": "Soft Night Blue",
+      "bg": "#0a0e1a",
+      "fg": "#a8d8ea",
+      "bg2": "#0e131d",
+      "accent": "#88c0d8",
+      "error": "#ff4757",
+      "success": "#1dd1a1"
+    },
+    {
+      "name": "Soft Night Purple",
+      "bg": "#100a1a",
+      "fg": "#d8a8ea",
+      "bg2": "#15101d",
+      "accent": "#c088d8",
+      "error": "#ff4757",
+      "success": "#2ed573"
+    },
+    {
+      "name": "Retro Terminal",
+      "bg": "#000000",
+      "fg": "#00ff00",
+      "bg2": "#001100",
+      "accent": "#00cc00",
+      "error": "#ff0000",
+      "success": "#00ff00"
+    },
+    {
+      "name": "Matrix",
+      "bg": "#000000",
+      "fg": "#00ff41",
+      "bg2": "#001100",
+      "accent": "#008f11",
+      "error": "#ff073a",
+      "success": "#00ff41"
+    }
+  ],
+  "default_theme": "Neon Blue"
+}

@@ -1,0 +1,13 @@
+# Build output
+*.o
+*.a
+/neon_core
+build/
+
+# llama.cpp is fetched on demand by the Makefile and is not vendored here
+/llama.cpp/
+
+# Local models and backups
+/models/*.gguf
+*.backup
+*.tmp
