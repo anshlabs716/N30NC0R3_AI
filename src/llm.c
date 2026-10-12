@@ -3,7 +3,9 @@
 #include <curl/curl.h>
 #include "cJSON.h"
 
-#define SYSTEM_PROMPT "You are neoncore, a helpful AI assistant."
+#define SYSTEM_PROMPT "You are neoncore, a friendly and helpful AI assistant. " \
+                      "Answer clearly and stay on topic. Keep replies short " \
+                      "(usually one to three sentences) and never repeat yourself."
 #define MAX_HISTORY_MSGS 20
 
 /* Ollama endpoint and model used when no local GGUF is present. */
@@ -186,7 +188,19 @@ static char *ollama_build_body(const char *user_input) {
     cJSON_AddStringToObject(um, "content", user_input ? user_input : "");
     cJSON_AddItemToArray(messages, um);
 
+    cJSON *options = cJSON_AddObjectToObject(root, "options");
+    if (options) {
+        cJSON_AddNumberToObject(options, "temperature", 0.6);
+        cJSON_AddNumberToObject(options, "top_p", 0.95);
+        cJSON_AddNumberToObject(options, "top_k", 20);
+        cJSON_AddNumberToObject(options, "repeat_penalty", 1.15);
+        cJSON_AddNumberToObject(options, "repeat_last_n", 64);
+        cJSON_AddNumberToObject(options, "num_predict", 512);
+    }
+
     cJSON_AddBoolToObject(root, "stream", 1);
+    /* Qwen3 supports thinking; turn it off so replies are short and direct. */
+    cJSON_AddBoolToObject(root, "think", 0);
 
     char *body = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
@@ -349,9 +363,12 @@ static void history_add(const char *role, const char *text) {
 
 static struct llama_sampler *make_sampler(void) {
     struct llama_sampler *smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
-    llama_sampler_chain_add(smpl, llama_sampler_init_top_k(40));
-    llama_sampler_chain_add(smpl, llama_sampler_init_top_p(0.9f, 1));
-    llama_sampler_chain_add(smpl, llama_sampler_init_temp(0.7f));
+    int32_t n_vocab = g_vocab ? llama_vocab_n_tokens(g_vocab) : 0;
+    /* Repetition penalty is the important one: it stops the model looping. */
+    llama_sampler_chain_add(smpl, llama_sampler_init_penalties(n_vocab, 64, 1.15f, 0.0f, 0.0f));
+    llama_sampler_chain_add(smpl, llama_sampler_init_top_k(20));
+    llama_sampler_chain_add(smpl, llama_sampler_init_top_p(0.95f, 1));
+    llama_sampler_chain_add(smpl, llama_sampler_init_temp(0.6f));
     llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
     return smpl;
 }
@@ -428,7 +445,7 @@ static char *llama_generate(const char *prompt, llm_stream_callback cb, void *da
     size_t out_len = 0;
 
     int n_max = n_ctx - n_prompt;
-    if (n_max > 1024) n_max = 1024;
+    if (n_max > 512) n_max = 512;   /* keep answers short and stop rambling */
 
     for (int i = 0; i < n_max; i++) {
         if (llama_decode(g_ctx, batch) != 0) break;
