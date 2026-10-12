@@ -59,6 +59,7 @@ typedef enum {
     INTENT_SEARCH,
     INTENT_DEFINE,
     INTENT_WEB_SEARCH,
+    INTENT_TERMINAL,
     INTENT_FALLBACK
 } IntentType;
 

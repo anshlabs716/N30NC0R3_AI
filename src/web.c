@@ -205,6 +205,6 @@ char* web_search(const char *query) {
     }
 
     /* Be kind to the search endpoint between calls. */
-    g_usleep(1500000);
+    g_usleep(300000);
     return out;
 }

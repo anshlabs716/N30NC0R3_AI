@@ -171,8 +171,9 @@ IntentResult brain_route(const char *input) {
     if (regex_match("^[[:space:]]*(help|commands|what can you do)", input)) {
         r.type = INTENT_HELP;
         set_text(&r, "Commands: help, clear, save, load, time, weather, password, roll dice, flip coin, "
-                     "remind me, todo, note, pattern, ascii art, poem, story, battle, joke, quote, "
-                     "fact, news, wikipedia, define, search, and anything else goes to the LLM.");
+                     "remind me, todo, note, pattern, ascii art, run <terminal command>, poem, story, "
+                     "battle, joke, quote, fact, news, wikipedia, define, search, and anything else "
+                     "goes to the LLM.");
         return r;
     }
     if (regex_match("^[[:space:]]*(clear|reset)\\b", input)) {
@@ -336,7 +337,24 @@ IntentResult brain_route(const char *input) {
         return r;
     }
 
-    /* 9. Fallback -> LLM ------------------------------------------------ */
+    /* 9. Terminal command ("run ..." or "$ ...") ------------------------ */
+    if (regex_match("^[[:space:]]*(run[[:space:]]+|[$!][[:space:]]*)", input)) {
+        const char *p = input;
+        while (*p && isspace((unsigned char)*p)) p++;
+        if (strncmp(p, "run", 3) == 0 && isspace((unsigned char)p[3])) {
+            p += 3;                       /* skip the word "run"            */
+        } else {
+            p++;                          /* skip the leading $ or !        */
+        }
+        while (*p && isspace((unsigned char)*p)) p++;
+        if (*p) {
+            r.type = INTENT_TERMINAL;
+            set_payload(&r, p);
+            return r;
+        }
+    }
+
+    /* 10. Fallback -> LLM ----------------------------------------------- */
     r.type = INTENT_FALLBACK;
     set_payload(&r, input);
     r.use_llm = 1;
@@ -378,6 +396,7 @@ const char* brain_intent_name(IntentType type) {
         case INTENT_SEARCH:       return "search";
         case INTENT_DEFINE:       return "define";
         case INTENT_WEB_SEARCH:   return "web_search";
+        case INTENT_TERMINAL:     return "terminal";
         case INTENT_FALLBACK:     return "llm";
         default:                  return "none";
     }

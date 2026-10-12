@@ -128,7 +128,12 @@ handled by the language model once you set one up.
   requests locally and forwards open-ended ones to the model.
 - **GTK 3 interface** with a header bar, session sidebar, chat view and status
   bar.
-- **Web search** through DuckDuckGo (HTML endpoint) using libcurl.
+- **Web search** through DuckDuckGo (HTML endpoint) using libcurl. The results
+  are handed to the model so it answers from live information instead of
+  guessing.
+- **Terminal commands**: type `run <command>` or `$ <command>` (for example
+  `run ls -la`) to run a shell command. A confirmation dialog appears first and
+  each command is limited to 10 seconds.
 - **ASCII art engine** with a built-in 7-row font, pattern generators and
   7-colour markers for the GUI.
 - **Text-to-speech** using libespeak-ng, with configurable rate and pitch.
@@ -204,7 +209,8 @@ Type a message and press Enter (or click **Send**). Useful commands:
 | `remind me in 5 minutes to stretch`                            | reminder                     |
 | `ascii art of neoncore` / `pattern diamond`                        | ASCII art                    |
 | `joke`, `quote`, `fact`, `poem`, `story`, `battle`             | written by the model         |
-| `search for black holes`, `wikipedia ...`, `news`              | web-backed answers           |
+| `search for black holes`, `wikipedia ...`, `news`              | web-backed answers (model)   |
+| `run ls -la` / `$ date`                                        | run a terminal command       |
 | anything else                                                  | routed to the local LLM      |
 
 ## Project layout

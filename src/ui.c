@@ -301,16 +301,91 @@ static void schedule_reminder(const char *input) {
 }
 
 /* --------------------------------------------------------------------- */
-/*  Send handler                                                         */
+/*  Terminal commands                                                    */
 /* --------------------------------------------------------------------- */
-static void present_web_results(const char *query) {
-    char *results = web_search(query);
-    if (results) {
-        ui_append_message("system", results);
-        free(results);
-    }
+static int confirm_run_command(const char *cmd) {
+    GtkWidget *dlg = gtk_message_dialog_new(
+        GTK_WINDOW(app_ui->window), GTK_DIALOG_MODAL,
+        GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
+        "Run this terminal command?");
+    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dlg), "%s", cmd);
+    gtk_dialog_add_buttons(GTK_DIALOG(dlg),
+                           "Cancel", GTK_RESPONSE_CANCEL,
+                           "Run", GTK_RESPONSE_OK, NULL);
+    int resp = gtk_dialog_run(GTK_DIALOG(dlg));
+    gtk_widget_destroy(dlg);
+    return resp == GTK_RESPONSE_OK;
 }
 
+/* Wrap a string in single quotes so it is safe to pass to `sh -c`. */
+static void shell_single_quote(const char *in, char *out, size_t n) {
+    size_t o = 0;
+#define PUT(ch) do { if (o + 1 < n) out[o++] = (char)(ch); } while (0)
+    PUT('\'');
+    for (const char *p = in; *p; p++) {
+        if (*p == '\'') { PUT('\''); PUT('\\'); PUT('\''); PUT('\''); }
+        else            { PUT(*p); }
+    }
+    PUT('\'');
+    out[o] = '\0';
+#undef PUT
+}
+
+static void run_terminal_command(const char *cmd) {
+    if (!cmd || !*cmd) return;
+
+    if (!confirm_run_command(cmd)) {
+        ui_append_message("system", "Command cancelled.");
+        return;
+    }
+
+    char quoted[8192];
+    shell_single_quote(cmd, quoted, sizeof(quoted));
+
+    /* `timeout` caps the run so a hanging command cannot freeze the app. */
+    char full[9216];
+    snprintf(full, sizeof(full), "timeout 10 sh -c %s 2>&1", quoted);
+
+    char header[8192];
+    snprintf(header, sizeof(header), "$ %s", cmd);
+    ui_append_message("system", header);
+
+    FILE *fp = popen(full, "r");
+    if (!fp) {
+        ui_append_message("system", "Could not start the command.");
+        return;
+    }
+
+    char out[8192];
+    size_t used = 0;
+    out[0] = '\0';
+    char line[512];
+    while (fgets(line, sizeof(line), fp)) {
+        size_t len = strlen(line);
+        if (used + len >= sizeof(out) - 1) {
+            const char *trunc = "\n... (output truncated)";
+            size_t tlen = strlen(trunc);
+            if (used + tlen < sizeof(out) - 1) {
+                memcpy(out + used, trunc, tlen);
+                used += tlen;
+            }
+            break;
+        }
+        memcpy(out + used, line, len);
+        used += len;
+    }
+    out[used] = '\0';
+
+    int status = pclose(fp);
+    if (status != 0 && used == 0)
+        snprintf(out, sizeof(out), "(command exited with status %d)", status);
+
+    ui_append_message("system", out[0] ? out : "(no output)");
+}
+
+/* --------------------------------------------------------------------- */
+/*  Send handler                                                         */
+/* --------------------------------------------------------------------- */
 static void handle_send(void) {
     const char *text = gtk_entry_get_text(GTK_ENTRY(app_ui->input_entry));
     if (!text || !*text) return;
@@ -370,6 +445,10 @@ static void handle_send(void) {
             schedule_reminder(input);
             break;
 
+        case INTENT_TERMINAL:
+            run_terminal_command(payload);
+            break;
+
         case INTENT_HELP:
         case INTENT_TIME:
         case INTENT_CALCULATE:
@@ -389,20 +468,27 @@ static void handle_send(void) {
             ui_append_message("assistant", "Chat history loaded.");
             break;
 
-        default:
+        default: {
             /* LLM / web path */
+            char *web_context = NULL;
             if (r.use_web) {
                 ui_set_status("Searching the web...");
-                present_web_results(payload);
+                web_context = web_search(payload);
+                if (web_context) ui_append_message("system", web_context);
             }
             if (llm_is_loaded()) {
                 char prompt[16384];
-                if (r.use_web)
+                if (web_context)
                     snprintf(prompt, sizeof(prompt),
-                             "Here are search results for %s. Answer the user's question using this context: %s",
-                             payload, payload);
+                             "You are neoncore, a helpful assistant. The user asked: %s\n\n"
+                             "Here are live web search results:\n%s\n"
+                             "Answer the user's question in a few short, clear sentences using "
+                             "these results. If the results do not contain the answer, say so "
+                             "plainly. Never invent facts that are not in the results.",
+                             payload, web_context);
                 else
                     snprintf(prompt, sizeof(prompt), "%s", payload);
+                free(web_context);
                 start_llm_stream(prompt, 0);
             } else {
                 char msg[8192];
@@ -410,8 +496,10 @@ static void handle_send(void) {
                          "I don't have the language model loaded, so I can't fully answer that. "
                          "(Query: %s)", payload);
                 ui_append_message("assistant", msg);
+                free(web_context);
             }
             break;
+        }
     }
 
     brain_free_result(&r);
@@ -448,8 +536,9 @@ static void on_help_clicked(GtkWidget *widget, gpointer data) {
     (void)widget; (void)data;
     ui_append_message("assistant",
         "Commands: help, clear, save, load, time, weather, generate password, roll dice, flip coin, "
-        "remind me in N minutes to X, todo, note, pattern, ascii art, poem, story, battle, joke, "
-        "quote, fact, news, wikipedia, define, search for X. Anything else goes to the language model. "
+        "remind me in N minutes to X, todo, note, pattern, ascii art, run <terminal command> "
+        "(for example: run ls -la), news, wikipedia, search for X. "
+        "Anything else goes to the language model. "
         "Click \"Get LLM\" to install Ollama and download qwen3:1.7b.");
 }
 
