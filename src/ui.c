@@ -370,25 +370,12 @@ static void handle_send(void) {
             schedule_reminder(input);
             break;
 
-        case INTENT_JOKE:
-        case INTENT_QUOTE:
-        case INTENT_FACT:
-        case INTENT_POEM:
-        case INTENT_STORY:
-        case INTENT_BATTLE:
-        case INTENT_GREETING:
-        case INTENT_FAREWELL:
-        case INTENT_NAME_ASK:
-        case INTENT_NAME_GIVE:
-        case INTENT_HOW_ARE_YOU:
         case INTENT_HELP:
         case INTENT_TIME:
         case INTENT_CALCULATE:
         case INTENT_PASSWORD:
         case INTENT_ROLL:
         case INTENT_FLIP:
-        case INTENT_CONVERT:
-        case INTENT_DEFINE:
         case INTENT_TODO:
         case INTENT_NOTE:
             ui_append_message("assistant", r.text ? r.text : "");

@@ -4,9 +4,9 @@ A C-based AI chat assistant with local LLM, web search, ASCII art, and TTS.
 
 neoncore is a native desktop chat assistant written entirely in C11. It
 runs a local large language model either directly through llama.cpp or through a
-local Ollama server, falls back to an embedded offline knowledge base for many
-queries, can search the web, renders coloured ASCII art, and speaks its replies
-aloud.
+local Ollama server, can search the web, renders coloured ASCII art, and speaks
+its replies aloud. The conversation itself is written by the language model - it
+has no canned or preset answers.
 
 ## Quick start (how to run it)
 
@@ -89,8 +89,10 @@ separate `.c` file, and they only do one job each:
 
 1. You type something and press Enter. The **face** (`ui.c`) passes it to the
    **receptionist** (`brain.c`).
-2. The receptionist looks for clues. A maths question, a joke, a reminder or an
-   ASCII picture it can handle **by itself, instantly**.
+2. The receptionist looks for clues. A maths question, a timer, a dice roll or an
+   ASCII picture it can handle **by itself, instantly**. Everything else - jokes,
+   stories, explanations, small talk - goes to the model, so there are no canned
+   answers.
 3. If the message is open-ended ("why is the sky blue?"), the receptionist asks
    the **big brain** (`llm.c`).
 4. The big brain writes the reply **one word at a time** — like the autocomplete
@@ -113,7 +115,8 @@ The big brain can run in two ways; the app picks whichever is ready, in order:
 
 Either way, **nothing is sent to a company's servers** — the thinking happens on
 your computer. If neither brain is available, the app still works using its
-built-in offline knowledge and local tools.
+local tools (maths, dice, timers, ASCII art and so on), and everything else is
+handled by the language model once you set one up.
 
 ## Features
 
@@ -131,8 +134,9 @@ built-in offline knowledge and local tools.
 - **Text-to-speech** using libespeak-ng, with configurable rate and pitch.
 - **Session storage** persisted as JSON (atomic writes) in `~/.neoncore/`.
 - **12 colour themes** loaded from `assets/themes.json`.
-- **Reminders, to-dos and notes**, jokes, quotes, facts, poems, stories and
-  "battle" generators.
+- **Local tools** for maths, timers, dice, coins, password generation, reminders,
+  to-dos, notes and ASCII art. All conversation (jokes, stories, explanations,
+  small talk) is written by the model - there are no preset replies.
 - **Code-block highlighting** and coloured ASCII rendering in the chat view.
 
 ## Dependencies
@@ -180,8 +184,7 @@ neoncore uses whichever of two local backends it finds, in this order:
    bar. It runs the Ollama installer and `ollama pull qwen3:1.7b`, streaming
    the progress into a dialog. Restart the app afterwards.
 
-If neither backend is available the assistant still runs, using its embedded
-offline knowledge and local tools.
+If neither backend is available the assistant still runs, using its local tools.
 
 ## Usage
 
@@ -194,13 +197,13 @@ Type a message and press Enter (or click **Send**). Useful commands:
 | Command                                                        | Result                       |
 |----------------------------------------------------------------|------------------------------|
 | `help`                                                         | list commands                |
-| `what is gravity`                                              | knowledge-base answer        |
+| `what is gravity`                                              | general question (model)     |
 | `calculate 12 * 8 + 4`                                         | arithmetic                   |
 | `generate a password 20`                                       | random password              |
 | `roll 2d20` / `flip a coin`                                    | dice / coin                  |
 | `remind me in 5 minutes to stretch`                            | reminder                     |
 | `ascii art of neoncore` / `pattern diamond`                        | ASCII art                    |
-| `joke`, `quote`, `fact`, `poem`, `story`, `battle`             | content generators           |
+| `joke`, `quote`, `fact`, `poem`, `story`, `battle`             | written by the model         |
 | `search for black holes`, `wikipedia ...`, `news`              | web-backed answers           |
 | anything else                                                  | routed to the local LLM      |
 
@@ -217,7 +220,7 @@ Type a message and press Enter (or click **Send**). Useful commands:
 └── src/
     ├── main.c          application entry point
     ├── ui.c / ui.h     GTK layout, chat rendering, session list, themes
-    ├── brain.c / .h    intent router, knowledge base, content libraries
+    ├── brain.c / .h    intent router (local tools + LLM routing)
     ├── llm.c / .h      llama.cpp and Ollama backends, sampling and streaming
     ├── web.c / .h      DuckDuckGo search and HTML parsing
     ├── ascii_art.c/.h  font, ASCII art and pattern generation

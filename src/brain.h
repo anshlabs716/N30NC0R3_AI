@@ -18,10 +18,11 @@ extern "C"
  * Intent router for neoncore.
  *
  * The router matches user input against an ordered list of structural
- * (POSIX ERE) patterns. Simple intents are answered locally from the
- * embedded knowledge base / content libraries. Complex intents are
- * flagged with use_llm so the caller can hand them to the language model
- * (optionally enriched with web-search context).
+ * (POSIX ERE) patterns. A handful of deterministic local tools (arithmetic,
+ * timers, dice, ASCII art, app control) are answered directly; everything
+ * conversational is flagged with use_llm so the language model writes the
+ * reply (optionally enriched with web-search context). There are no canned
+ * answers.
  */
 typedef enum {
     INTENT_NONE = 0,
@@ -71,17 +72,6 @@ typedef struct {
 
 /* Route a single line of user input. Caller frees with brain_free_result(). */
 IntentResult brain_route(const char *input);
-
-/* Look up a term in the embedded knowledge base. NULL if not found. */
-const char* brain_knowledge_lookup(const char *term);
-
-/* A random joke / quote / fact / poem / story / battle. Never NULL. */
-const char* brain_random_joke(void);
-const char* brain_random_quote(void);
-const char* brain_random_fact(void);
-const char* brain_random_poem(void);
-const char* brain_random_story(void);
-const char* brain_random_battle(void);
 
 /* Human-readable name of an intent (for the status bar / debugging). */
 const char* brain_intent_name(IntentType type);
