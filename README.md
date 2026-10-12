@@ -119,4 +119,4 @@ Settings and chat history are stored under `~/.neon_core_ai/`:
 
 ## License
 
-Released under the Apache License 2.0. See `LICENSE`.
+Released under the Apache License 2.0.
