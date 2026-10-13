@@ -51,4 +51,19 @@ clean:
 clean-llama:
 	rm -rf $(LLAMA_BUILD) $(LLAMA_STAMP)
 
-.PHONY: all clean clean-llama
+# Verify the project's own files stay free of Python and shell scripts.
+# llama.cpp is a fetched third-party dependency, and build artefacts/target
+# are binary, so all three are excluded here.
+check:
+	@bad=0; \
+	for pat in python '\.py\b' '\.sh\b'; do \
+		matches=$$(grep -rInE "$$pat" . \
+			--exclude-dir=.git --exclude-dir=llama.cpp \
+			--exclude='*.o' --exclude='$(TARGET)' --exclude=Makefile 2>/dev/null); \
+		if [ -n "$$matches" ]; then echo "  FAIL ($$pat):"; echo "$$matches"; bad=1; fi; \
+	done; \
+	if [ $$bad -eq 0 ]; then \
+		echo "OK: no python / .py / .sh in project files"; \
+	else echo "FAIL: forbidden references found"; exit 1; fi
+
+.PHONY: all clean clean-llama check

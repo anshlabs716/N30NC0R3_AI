@@ -177,6 +177,9 @@ The first build fetches llama.cpp into `./llama.cpp`, compiles it, and then
 links the application. The result is the `neoncore` executable in the project
 root. Run `make clean-llama` to remove the fetched llama.cpp and start over.
 
+Run `make check` to confirm the project's own files contain no Python or shell
+scripts (`llama.cpp`, which is a fetched third-party engine, is excluded).
+
 ## Model setup
 
 neoncore uses whichever of these backends it finds, in this order:
