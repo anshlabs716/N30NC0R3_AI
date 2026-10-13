@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use neoncore in your work, please cite it as below."
+title: "neoncore"
+type: software
+authors:
+  - family-names: "Bhatia"
+    given-names: "Ansh"
+    alias: "anshlabs716"
+repository-code: "https://github.com/anshlabs716/N30NC0R3_AI"
+license: "NOASSERTION"
+abstract: "neoncore"
