@@ -11,6 +11,7 @@ neoncore
 
 ## Main components
 
+- **Cloud AI** (keyless by default; optional key for other providers)
 - **llama.cpp**
 - **Ollama**
 - **GTK3**

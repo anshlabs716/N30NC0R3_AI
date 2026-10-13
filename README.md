@@ -2,11 +2,11 @@
 
 A C-based AI chat assistant with local LLM, web search, ASCII art, and TTS.
 
-neoncore is a native desktop chat assistant written entirely in C11. It
-runs a local large language model either directly through llama.cpp or through a
-local Ollama server, can search the web, renders coloured ASCII art, and speaks
-its replies aloud. The conversation itself is written by the language model - it
-has no canned or preset answers.
+neoncore is a native desktop chat assistant written entirely in C11. It can talk
+to a free cloud AI (no API key needed) or run a local large language model either
+directly through llama.cpp or through a local Ollama server, can search the web,
+renders coloured ASCII art, and speaks its replies aloud. The conversation itself
+is written by the language model - it has no canned or preset answers.
 
 ## Quick start (how to run it)
 
@@ -103,23 +103,30 @@ separate `.c` file, and they only do one job each:
    **voice** (`tts.c`) can read it aloud. The **notebook** (`storage.c`) saves
    the conversation for next time.
 
-### The two "brains"
+### The "brains"
 
-The big brain can run in two ways; the app picks whichever is ready, in order:
+The big brain can run in three ways. The app tries them in this order:
 
-1. **llama.cpp** — the AI engine is built right inside the project and reads a
+1. **Cloud (keyless by default)** — talks over the internet to a free AI
+   service (Pollinations) that needs **no API key** and no sign-up. This is on
+   by default. You can turn it off in **Settings** to keep everything local, or
+   switch to another provider (Groq, OpenRouter, Google Gemini, OpenAI) by
+   pasting your own key for much higher usage limits.
+2. **llama.cpp** — the AI engine is built right inside the project and reads a
    `.gguf` model file from `models/`. Everything runs on your own computer.
-2. **Ollama** — if there is no model file, the app talks to a local Ollama
-   server (`qwen3:1.7b`) through the internet port on your own machine. The
-   **Get LLM** button sets this one up.
+3. **Ollama** — if there is no model file, the app talks to a local Ollama
+   server (`qwen3:1.7b`) on your own machine. The **Get LLM** button sets this
+   one up.
 
-Either way, **nothing is sent to a company's servers** — the thinking happens on
-your computer. If neither brain is available, the app still works using its
-local tools (maths, dice, timers, ASCII art and so on), and everything else is
-handled by the language model once you set one up.
+With cloud AI turned **off**, nothing leaves your computer. Bank on the local
+backends when you are offline. If no brain is available at all, the app still
+works using its local tools (maths, dice, timers, ASCII art and so on).
 
 ## Features
 
+- **Free cloud AI, no key required**: works out of the box through a keyless,
+  OpenAI-compatible endpoint. Paste an optional key in Settings to use Groq,
+  OpenRouter, Google Gemini, OpenAI, or a custom URL.
 - **Local LLM inference** via llama.cpp, with an automatic fallback to a local
   Ollama server running Qwen3 1.7B.
 - **One-click LLM setup**: the **Get LLM** button installs Ollama and pulls
@@ -148,6 +155,7 @@ handled by the language model once you set one up.
 
 | Library      | Purpose                      | Typical package            |
 |--------------|------------------------------|----------------------------|
+| Pollinations | Free keyless cloud AI        | built in (no key)          |
 | llama.cpp    | Direct local LLM inference   | fetched by the Makefile    |
 | Ollama       | Alternative local LLM server | installed by **Get LLM**   |
 | GTK 3        | Graphical interface          | `libgtk-3-dev`             |
@@ -171,7 +179,13 @@ root. Run `make clean-llama` to remove the fetched llama.cpp and start over.
 
 ## Model setup
 
-neoncore uses whichever of two local backends it finds, in this order:
+neoncore uses whichever of these backends it finds, in this order:
+
+0. **Cloud (on by default).** If "Use cloud AI" is ticked in Settings, the app
+   uses the free keyless cloud endpoint. To use a different provider, pick it in
+   the **Cloud provider** dropdown and paste your **API key**; the endpoint and
+   model are filled in for you. Choose **Custom** to type your own endpoint URL
+   and model name. Any OpenAI-compatible endpoint works.
 
 1. **llama.cpp (direct).** Place a GGUF file in `models/`. The default expected
    filename is:
@@ -189,7 +203,7 @@ neoncore uses whichever of two local backends it finds, in this order:
    bar. It runs the Ollama installer and `ollama pull qwen3:1.7b`, streaming
    the progress into a dialog. Restart the app afterwards.
 
-If neither backend is available the assistant still runs, using its local tools.
+If no backend is available the assistant still runs, using its local tools.
 
 ## Usage
 
@@ -227,7 +241,7 @@ Type a message and press Enter (or click **Send**). Useful commands:
     ├── main.c          application entry point
     ├── ui.c / ui.h     GTK layout, chat rendering, session list, themes
     ├── brain.c / .h    intent router (local tools + LLM routing)
-    ├── llm.c / .h      llama.cpp and Ollama backends, sampling and streaming
+    ├── llm.c / .h      cloud, llama.cpp and Ollama backends, streaming
     ├── web.c / .h      DuckDuckGo search and HTML parsing
     ├── ascii_art.c/.h  font, ASCII art and pattern generation
     ├── tts.c / .h      libespeak-ng speech wrapper

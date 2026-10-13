@@ -31,7 +31,13 @@ int main(int argc, char *argv[]) {
     tts_set_rate(settings->voice_rate);
     tts_set_pitch(settings->voice_pitch);
 
-    /* Try to load the local model; the app works offline without it. */
+    /* Try a model; cloud if enabled & reachable, else the local one. */
+    llm_set_cloud_enabled(settings->use_cloud);
+    {
+        char ep[512], mdl[128], lbl[32];
+        settings_cloud_resolve(settings, ep, sizeof(ep), mdl, sizeof(mdl), lbl, sizeof(lbl));
+        llm_set_cloud_config(ep, mdl, settings->cloud_api_key, lbl);
+    }
     if (!llm_init()) {
         fprintf(stderr, "[neoncore] No model available - running in offline mode.\n");
     } else {

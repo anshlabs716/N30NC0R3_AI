@@ -524,12 +524,38 @@ static void refresh_theme_from_settings(void) {
 
 static void on_settings_clicked(GtkWidget *widget, gpointer data) {
     (void)widget; (void)data;
+    Settings old = *app_ui->settings;
     Settings tmp = *app_ui->settings;
     settings_show_dialog(GTK_WINDOW(app_ui->window), &tmp);
     *app_ui->settings = tmp;
     refresh_theme_from_settings();
     tts_set_rate(app_ui->settings->voice_rate);
     tts_set_pitch(app_ui->settings->voice_pitch);
+
+    /* Re-pick the AI backend only if the cloud settings changed. */
+    int cloud_changed =
+        tmp.use_cloud != old.use_cloud ||
+        strcmp(tmp.cloud_provider, old.cloud_provider) != 0 ||
+        strcmp(tmp.cloud_api_key,  old.cloud_api_key)  != 0 ||
+        strcmp(tmp.cloud_endpoint, old.cloud_endpoint) != 0 ||
+        strcmp(tmp.cloud_model,    old.cloud_model)    != 0;
+
+    if (cloud_changed) {
+        char ep[512], mdl[128], lbl[32];
+        settings_cloud_resolve(app_ui->settings, ep, sizeof(ep), mdl, sizeof(mdl), lbl, sizeof(lbl));
+        llm_cleanup();
+        llm_set_cloud_enabled(tmp.use_cloud);
+        llm_set_cloud_config(ep, mdl, tmp.cloud_api_key, lbl);
+        if (llm_init()) {
+            char st[200];
+            snprintf(st, sizeof(st), "Model ready (%s) - Ready", llm_backend_name());
+            ui_set_status(st);
+            ui_append_message("assistant", "Switched AI backend.");
+        } else {
+            ui_set_status("Ready (no model - click Get LLM)");
+            ui_append_message("assistant", "No AI backend available right now.");
+        }
+    }
 }
 
 static void on_help_clicked(GtkWidget *widget, gpointer data) {

@@ -18,6 +18,14 @@ typedef void (*llm_stream_callback)(const char *token, void *data);
 /* Load the Qwen3 1.7B Q4_K_M model from ./models/. Returns 1 on success. */
 int llm_init(void);
 
+/* Prefer the free cloud backend when it is reachable. Call before llm_init(). */
+void llm_set_cloud_enabled(int enabled);
+
+/* Optional cloud configuration. Empty endpoint/model fall back to the free
+ * keyless defaults; api_key may be empty (keyless) or a provider key. */
+void llm_set_cloud_config(const char *endpoint, const char *model,
+                          const char *api_key, const char *label);
+
 /* Free the model and context. */
 void llm_cleanup(void);
 

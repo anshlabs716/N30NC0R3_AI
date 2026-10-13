@@ -1,11 +1,5 @@
 * text=auto eol=lf
 
-*.sh            text eol=lf
-*.bash          text eol=lf
-*.ps1           text eol=crlf
-*.bat           text eol=crlf
-*.cmd           text eol=crlf
-
 *.png           binary
 *.jpg           binary
 *.jpeg          binary
@@ -30,7 +24,6 @@
 *.kt            text eol=lf
 *.java          text eol=lf
 *.rs            text eol=lf
-*.py            text eol=lf
 *.js            text eol=lf
 *.css           text eol=lf
 *.html          text eol=lf

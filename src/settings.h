@@ -38,6 +38,11 @@ typedef struct {
     int  verbosity;
     int  voice_rate;
     int  voice_pitch;
+    int  use_cloud;
+    char cloud_provider[32];   /* pollinations | groq | openrouter | gemini | openai | custom */
+    char cloud_api_key[256];   /* optional; empty = keyless (Pollinations) */
+    char cloud_endpoint[256];  /* only used when provider == "custom" */
+    char cloud_model[128];     /* optional model override */
 } Settings;
 
 /* Load/save ~/.neoncore/settings.json. */
@@ -57,6 +62,12 @@ const Theme* settings_find_theme(const Theme *themes, int count, const char *nam
 
 /* Show the modal settings dialog. Returns 1 if the user pressed Save. */
 int       settings_show_dialog(GtkWindow *parent, Settings *s);
+
+/* Work out the cloud endpoint, model and short label from the settings. */
+void      settings_cloud_resolve(const Settings *s,
+                                 char *endpoint, size_t ep_sz,
+                                 char *model,    size_t m_sz,
+                                 char *label,    size_t l_sz);
 
 #ifdef __cplusplus
 }

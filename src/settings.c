@@ -36,6 +36,53 @@ static void settings_defaults(Settings *s) {
     s->verbosity = 50;
     s->voice_rate = 175;
     s->voice_pitch = 50;
+    s->use_cloud = 1;
+    snprintf(s->cloud_provider, sizeof(s->cloud_provider), "pollinations");
+}
+
+/* Known cloud providers. All speak the OpenAI chat-completions protocol. */
+typedef struct {
+    const char *id;
+    const char *text;
+    const char *endpoint;
+    const char *model;
+} CloudPreset;
+
+static const CloudPreset CLOUD_PRESETS[] = {
+    { "pollinations", "Pollinations (free, no key)",
+      "https://text.pollinations.ai/openai", "openai-fast" },
+    { "groq",         "Groq (needs key)",
+      "https://api.groq.com/openai/v1/chat/completions", "llama-3.3-70b-versatile" },
+    { "openrouter",   "OpenRouter (needs key)",
+      "https://openrouter.ai/api/v1/chat/completions", "openai/gpt-4o-mini" },
+    { "gemini",       "Google Gemini (needs key)",
+      "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", "gemini-2.0-flash" },
+    { "openai",       "OpenAI (needs key)",
+      "https://api.openai.com/v1/chat/completions", "gpt-4o-mini" },
+    { "custom",       "Custom (enter a URL below)", "", "" },
+    { NULL, NULL, NULL, NULL }
+};
+
+static const CloudPreset* find_preset(const char *id) {
+    for (int i = 0; CLOUD_PRESETS[i].id; i++)
+        if (id && strcmp(id, CLOUD_PRESETS[i].id) == 0) return &CLOUD_PRESETS[i];
+    return &CLOUD_PRESETS[0];
+}
+
+void settings_cloud_resolve(const Settings *s,
+                            char *endpoint, size_t ep_sz,
+                            char *model,    size_t m_sz,
+                            char *label,    size_t l_sz) {
+    const CloudPreset *p = find_preset(s->cloud_provider);
+    if (strcmp(p->id, "custom") == 0) {
+        snprintf(endpoint, ep_sz, "%s", s->cloud_endpoint);
+        snprintf(model, m_sz, "%s", s->cloud_model);
+    } else {
+        snprintf(endpoint, ep_sz, "%s", p->endpoint);
+        /* Use the preset model unless the user typed an override. */
+        snprintf(model, m_sz, "%s", s->cloud_model[0] ? s->cloud_model : p->model);
+    }
+    snprintf(label, l_sz, "%s", p->id);
 }
 
 Settings* settings_load(void) {
@@ -84,6 +131,11 @@ Settings* settings_load(void) {
         GETI("verbosity", verbosity);
         GETI("voice_rate", voice_rate);
         GETI("voice_pitch", voice_pitch);
+        GETI("use_cloud", use_cloud);
+        GETS("cloud_provider", cloud_provider);
+        GETS("cloud_api_key", cloud_api_key);
+        GETS("cloud_endpoint", cloud_endpoint);
+        GETS("cloud_model", cloud_model);
 #undef GETS
 #undef GETI
         cJSON_Delete(root);
@@ -117,6 +169,11 @@ int settings_save(Settings *s) {
     cJSON_AddNumberToObject(root, "verbosity", s->verbosity);
     cJSON_AddNumberToObject(root, "voice_rate", s->voice_rate);
     cJSON_AddNumberToObject(root, "voice_pitch", s->voice_pitch);
+    cJSON_AddBoolToObject(root, "use_cloud", s->use_cloud);
+    cJSON_AddStringToObject(root, "cloud_provider", s->cloud_provider);
+    cJSON_AddStringToObject(root, "cloud_api_key", s->cloud_api_key);
+    cJSON_AddStringToObject(root, "cloud_endpoint", s->cloud_endpoint);
+    cJSON_AddStringToObject(root, "cloud_model", s->cloud_model);
 
     char *out = cJSON_Print(root);
     cJSON_Delete(root);
@@ -263,6 +320,11 @@ typedef struct {
     GtkWidget *timestamps_check;
     GtkWidget *reminders_check;
     GtkWidget *autoclear_check;
+    GtkWidget *cloud_check;
+    GtkWidget *cloud_provider_combo;
+    GtkWidget *cloud_key_entry;
+    GtkWidget *cloud_endpoint_entry;
+    GtkWidget *cloud_model_entry;
     GtkWidget *humor_scale;
     GtkWidget *verbosity_scale;
     GtkWidget *rate_scale;
@@ -294,6 +356,16 @@ static void on_dialog_response(GtkDialog *dialog, gint response_id, gpointer dat
     s->enable_reminders = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(refs->reminders_check));
     s->auto_clear       = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(refs->autoclear_check));
 
+    s->use_cloud = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(refs->cloud_check));
+    const char *cp = gtk_combo_box_get_active_id(GTK_COMBO_BOX(refs->cloud_provider_combo));
+    snprintf(s->cloud_provider, sizeof(s->cloud_provider), "%s", cp ? cp : "pollinations");
+    snprintf(s->cloud_api_key, sizeof(s->cloud_api_key), "%s",
+             gtk_entry_get_text(GTK_ENTRY(refs->cloud_key_entry)));
+    snprintf(s->cloud_endpoint, sizeof(s->cloud_endpoint), "%s",
+             gtk_entry_get_text(GTK_ENTRY(refs->cloud_endpoint_entry)));
+    snprintf(s->cloud_model, sizeof(s->cloud_model), "%s",
+             gtk_entry_get_text(GTK_ENTRY(refs->cloud_model_entry)));
+
     s->humor_level = (int)gtk_range_get_value(GTK_RANGE(refs->humor_scale));
     s->verbosity   = (int)gtk_range_get_value(GTK_RANGE(refs->verbosity_scale));
     s->voice_rate  = (int)gtk_range_get_value(GTK_RANGE(refs->rate_scale));
@@ -314,7 +386,7 @@ int settings_show_dialog(GtkWindow *parent, Settings *s) {
         "_Cancel", GTK_RESPONSE_CANCEL,
         "_Save", GTK_RESPONSE_ACCEPT, NULL);
     refs.dialog = dialog;
-    gtk_window_set_default_size(GTK_WINDOW(dialog), 460, 620);
+    gtk_window_set_default_size(GTK_WINDOW(dialog), 520, 720);
 
     GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     GtkWidget *grid = gtk_grid_new();
@@ -380,6 +452,33 @@ int settings_show_dialog(GtkWindow *parent, Settings *s) {
     gtk_grid_attach(GTK_GRID(grid), refs.timestamps_check, 0, row++, 2, 1);
     gtk_grid_attach(GTK_GRID(grid), refs.reminders_check, 0, row++, 2, 1);
     gtk_grid_attach(GTK_GRID(grid), refs.autoclear_check, 0, row++, 2, 1);
+
+    refs.cloud_check = gtk_check_button_new_with_label("Use cloud AI (works with no key)");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(refs.cloud_check), s->use_cloud);
+    gtk_grid_attach(GTK_GRID(grid), refs.cloud_check, 0, row++, 2, 1);
+
+    refs.cloud_provider_combo = gtk_combo_box_text_new();
+    for (int i = 0; CLOUD_PRESETS[i].id; i++)
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(refs.cloud_provider_combo),
+                                  CLOUD_PRESETS[i].id, CLOUD_PRESETS[i].text);
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(refs.cloud_provider_combo),
+                                s->cloud_provider[0] ? s->cloud_provider : "pollinations");
+    add_row(grid, row++, "Cloud provider", refs.cloud_provider_combo);
+
+    refs.cloud_key_entry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(refs.cloud_key_entry), "optional key or token");
+    gtk_entry_set_text(GTK_ENTRY(refs.cloud_key_entry), s->cloud_api_key);
+    add_row(grid, row++, "API key", refs.cloud_key_entry);
+
+    refs.cloud_endpoint_entry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(refs.cloud_endpoint_entry), "only for Custom");
+    gtk_entry_set_text(GTK_ENTRY(refs.cloud_endpoint_entry), s->cloud_endpoint);
+    add_row(grid, row++, "Custom URL", refs.cloud_endpoint_entry);
+
+    refs.cloud_model_entry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(refs.cloud_model_entry), "optional model name");
+    gtk_entry_set_text(GTK_ENTRY(refs.cloud_model_entry), s->cloud_model);
+    add_row(grid, row++, "Model", refs.cloud_model_entry);
 
     refs.humor_scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
     gtk_range_set_value(GTK_RANGE(refs.humor_scale), s->humor_level);

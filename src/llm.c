@@ -12,10 +12,15 @@
 #define OLLAMA_HOST  "http://127.0.0.1:11434"
 #define OLLAMA_MODEL "qwen3:1.7b"
 
+/* Free, keyless cloud backend (OpenAI-compatible). */
+#define CLOUD_ENDPOINT "https://text.pollinations.ai/openai"
+#define CLOUD_MODEL    "openai-fast"
+
 typedef enum {
     BACKEND_NONE = 0,
     BACKEND_LLAMA,   /* direct in-process inference through llama.cpp */
-    BACKEND_OLLAMA   /* HTTP inference through a local Ollama server      */
+    BACKEND_OLLAMA,  /* HTTP inference through a local Ollama server      */
+    BACKEND_CLOUD    /* cloud inference (keyless or with an API key)      */
 } LlmBackend;
 
 static struct llama_model   *g_model  = NULL;
@@ -24,6 +29,28 @@ static const struct llama_vocab *g_vocab = NULL;
 static LlmBackend g_backend = BACKEND_NONE;
 static int g_loaded = 0;
 static int g_curl_ready = 0;
+
+/* Cloud configuration (set from Settings before llm_init). */
+static int  g_cloud_enabled = 1;
+static char g_cloud_endpoint[512] = CLOUD_ENDPOINT;
+static char g_cloud_model[128]    = CLOUD_MODEL;
+static char g_cloud_key[512]      = "";
+static char g_cloud_label[32]     = "pollinations";
+
+void llm_set_cloud_enabled(int enabled) {
+    g_cloud_enabled = enabled ? 1 : 0;
+}
+
+void llm_set_cloud_config(const char *endpoint, const char *model,
+                          const char *api_key, const char *label) {
+    snprintf(g_cloud_endpoint, sizeof(g_cloud_endpoint), "%s",
+             (endpoint && endpoint[0]) ? endpoint : CLOUD_ENDPOINT);
+    snprintf(g_cloud_model, sizeof(g_cloud_model), "%s",
+             (model && model[0]) ? model : CLOUD_MODEL);
+    snprintf(g_cloud_key, sizeof(g_cloud_key), "%s", api_key ? api_key : "");
+    snprintf(g_cloud_label, sizeof(g_cloud_label), "%s",
+             (label && label[0]) ? label : "cloud");
+}
 
 typedef struct {
     char role[16];
@@ -40,9 +67,13 @@ int llm_is_loaded(void) {
 }
 
 const char *llm_backend_name(void) {
+    static char cloud_name[64];
     switch (g_backend) {
         case BACKEND_LLAMA:  return "llama.cpp";
         case BACKEND_OLLAMA: return "ollama";
+        case BACKEND_CLOUD:
+            snprintf(cloud_name, sizeof(cloud_name), "cloud (%s)", g_cloud_label);
+            return cloud_name;
         default:             return "none";
     }
 }
@@ -263,6 +294,221 @@ static char *ollama_generate(const char *prompt, llm_stream_callback cb, void *d
 }
 
 /* --------------------------------------------------------------------- */
+/*  Cloud HTTP backend (OpenAI-compatible, keyless by default)           */
+/* --------------------------------------------------------------------- */
+
+/* Check that the cloud backend looks usable. The free keyless endpoint is
+ * probed for real; keyed/custom endpoints are assumed reachable and any
+ * problem (bad key, offline) is reported when the request is made. */
+static int cloud_detect(void) {
+    int is_keyless_default =
+        (strcmp(g_cloud_endpoint, CLOUD_ENDPOINT) == 0) && (g_cloud_key[0] == '\0');
+    if (!is_keyless_default) return g_cloud_endpoint[0] ? 1 : 0;
+
+    CURL *curl = curl_easy_init();
+    if (!curl) return 0;
+
+    struct ollama_buf buf = {0};
+    buf.data = (char *)calloc(1, 1);
+
+    curl_easy_setopt(curl, CURLOPT_URL, "https://text.pollinations.ai/models");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ollama_buf_write);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buf);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 4L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 8L);
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "neoncore/3.0");
+
+    CURLcode rc = curl_easy_perform(curl);
+    long code = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+    curl_easy_cleanup(curl);
+    free(buf.data);
+    return (rc == CURLE_OK && code == 200);
+}
+
+typedef struct {
+    char  *line;
+    size_t len, cap;
+    llm_stream_callback cb;
+    void  *cbdata;
+    char  *out;
+    size_t outlen, outcap;
+    int    denied;   /* set when the server returns a rate-limit / auth error */
+} CloudStream;
+
+static void cloud_append_out(CloudStream *st, const char *s) {
+    size_t n = strlen(s);
+    if (st->outlen + n + 1 > st->outcap) {
+        size_t nc = st->outcap ? st->outcap * 2 : 4096;
+        while (nc < st->outlen + n + 1) nc *= 2;
+        char *grown = (char *)realloc(st->out, nc);
+        if (!grown) return;
+        st->out = grown;
+        st->outcap = nc;
+    }
+    memcpy(st->out + st->outlen, s, n);
+    st->outlen += n;
+    st->out[st->outlen] = '\0';
+}
+
+/* Parse one Server-Sent-Events line, i.e. `data: {json}`. */
+static void cloud_handle_line(CloudStream *st) {
+    if (st->len == 0) return;
+    st->line[st->len] = '\0';
+    st->len = 0;
+
+    const char *payload = st->line;
+    if (strncmp(payload, "data:", 5) != 0) return;  /* keep-alive / comment */
+    payload += 5;
+    while (*payload == ' ') payload++;
+    if (strncmp(payload, "[DONE]", 6) == 0) return;
+
+    cJSON *obj = cJSON_Parse(payload);
+    if (!obj) return;
+
+    cJSON *err = cJSON_GetObjectItemCaseSensitive(obj, "error");
+    if (err && !cJSON_IsNull(err)) {
+        const char *etext = cJSON_IsString(err) ? err->valuestring : NULL;
+        if (!etext && cJSON_IsObject(err)) {
+            cJSON *m = cJSON_GetObjectItemCaseSensitive(err, "message");
+            if (cJSON_IsString(m)) etext = m->valuestring;
+        }
+        char msg[2048];
+        snprintf(msg, sizeof(msg), "\n[cloud] %s\n", etext ? etext : "request failed");
+        cloud_append_out(st, msg);
+        if (st->cb) st->cb(msg, st->cbdata);
+        st->denied = 1;
+        cJSON_Delete(obj);
+        return;
+    }
+
+    cJSON *choices = cJSON_GetObjectItemCaseSensitive(obj, "choices");
+    cJSON *choice0 = cJSON_IsArray(choices) ? cJSON_GetArrayItem(choices, 0) : NULL;
+    cJSON *delta   = choice0 ? cJSON_GetObjectItemCaseSensitive(choice0, "delta") : NULL;
+    cJSON *content = delta ? cJSON_GetObjectItemCaseSensitive(delta, "content") : NULL;
+    if (cJSON_IsString(content) && content->valuestring && content->valuestring[0]) {
+        cloud_append_out(st, content->valuestring);
+        if (st->cb) st->cb(content->valuestring, st->cbdata);
+    }
+    cJSON_Delete(obj);
+}
+
+static size_t cloud_stream_cb(char *ptr, size_t size, size_t nmemb, void *ud) {
+    CloudStream *st = (CloudStream *)ud;
+    size_t total = size * nmemb;
+    for (size_t i = 0; i < total; i++) {
+        char ch = ptr[i];
+        if (ch == '\n') { cloud_handle_line(st); continue; }
+        if (ch == '\r') continue;
+        if (st->len + 2 > st->cap) {
+            size_t nc = st->cap ? st->cap * 2 : 1024;
+            char *grown = (char *)realloc(st->line, nc);
+            if (!grown) return 0;
+            st->line = grown;
+            st->cap = nc;
+        }
+        st->line[st->len++] = ch;
+    }
+    return total;
+}
+
+static char *cloud_build_body(const char *user_input) {
+    cJSON *root = cJSON_CreateObject();
+    if (!root) return NULL;
+    cJSON_AddStringToObject(root, "model", g_cloud_model);
+
+    cJSON *messages = cJSON_AddArrayToObject(root, "messages");
+    cJSON *sys = cJSON_CreateObject();
+    cJSON_AddStringToObject(sys, "role", "system");
+    cJSON_AddStringToObject(sys, "content", SYSTEM_PROMPT);
+    cJSON_AddItemToArray(messages, sys);
+
+    for (int i = 0; i < g_history_count; i++) {
+        cJSON *m = cJSON_CreateObject();
+        cJSON_AddStringToObject(m, "role", g_history[i].role);
+        cJSON_AddStringToObject(m, "content", g_history[i].text ? g_history[i].text : "");
+        cJSON_AddItemToArray(messages, m);
+    }
+
+    cJSON *um = cJSON_CreateObject();
+    cJSON_AddStringToObject(um, "role", "user");
+    cJSON_AddStringToObject(um, "content", user_input ? user_input : "");
+    cJSON_AddItemToArray(messages, um);
+
+    cJSON_AddBoolToObject(root, "stream", 1);
+
+    char *body = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+    return body;
+}
+
+static char *cloud_generate(const char *prompt, llm_stream_callback cb, void *data) {
+    char *body = cloud_build_body(prompt);
+    if (!body) return NULL;
+
+    CURL *curl = curl_easy_init();
+    if (!curl) { free(body); return strdup(""); }
+
+    CloudStream st;
+    memset(&st, 0, sizeof(st));
+    st.cb = cb;
+    st.cbdata = data;
+
+    struct curl_slist *headers = NULL;
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    char auth[600];
+    if (g_cloud_key[0]) {
+        snprintf(auth, sizeof(auth), "Authorization: Bearer %s", g_cloud_key);
+        headers = curl_slist_append(headers, auth);
+    }
+
+    curl_easy_setopt(curl, CURLOPT_URL, g_cloud_endpoint);
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_POST, 1L);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(body));
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cloud_stream_cb);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &st);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 120L);
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "neoncore/3.0");
+
+    CURLcode rc = curl_easy_perform(curl);
+    cloud_handle_line(&st);   /* flush a trailing line without newline */
+
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+    free(body);
+    free(st.line);
+
+    if (rc != CURLE_OK && (!st.out || !st.out[0])) {
+        const char *msg = "I couldn't reach the cloud AI. Check your internet "
+                          "connection, or turn off cloud AI in Settings to use a "
+                          "local model.";
+        if (cb) cb(msg, data);
+        free(st.out);
+        return strdup(msg);
+    }
+
+    history_add("user", prompt);
+    history_add("assistant", st.out ? st.out : "");
+
+    if (!st.out || !st.out[0]) {
+        free(st.out);
+        if (st.denied) {
+            const char *m = "The cloud AI said no to that request (busy or bad key). "
+                            "Wait a moment, or add/check your key in Settings.";
+            if (cb) cb(m, data);
+            return strdup(m);
+        }
+        return strdup("");
+    }
+    return st.out;
+}
+
+/* --------------------------------------------------------------------- */
 /*  llama.cpp in-process backend                                         */
 /* --------------------------------------------------------------------- */
 
@@ -270,6 +516,13 @@ int llm_init(void) {
     if (!g_curl_ready) {
         curl_global_init(CURL_GLOBAL_DEFAULT);
         g_curl_ready = 1;
+    }
+
+    /* Prefer the cloud backend when it is enabled and looks reachable. */
+    if (g_cloud_enabled && cloud_detect()) {
+        g_backend = BACKEND_CLOUD;
+        g_loaded = 1;
+        return 1;
     }
 
     const char *model_paths[] = {
@@ -489,6 +742,9 @@ char *llm_generate(const char *prompt, llm_stream_callback cb, void *data) {
 
     if (g_backend == BACKEND_OLLAMA) {
         return ollama_generate(prompt, cb, data);
+    }
+    if (g_backend == BACKEND_CLOUD) {
+        return cloud_generate(prompt, cb, data);
     }
     if (g_backend == BACKEND_LLAMA && g_ctx) {
         return llama_generate(prompt, cb, data);
