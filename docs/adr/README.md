@@ -2,8 +2,6 @@
 
 Architecture decision records for neoncore.
 
-# Architecture Decision Records
-
 This directory records significant architecture decisions for neoncore.
 
 ## What is an ADR?

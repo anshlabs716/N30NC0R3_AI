@@ -2,8 +2,6 @@
 
 High-level structure of neoncore.
 
-# Architecture
-
 This page describes the high-level structure of neoncore. It is a starting
 point and is updated as the implementation evolves.
 
@@ -13,11 +11,11 @@ neoncore
 
 ## Main components
 
-- `**llama.cpp**`
-- `**Ollama**`
-- `**GTK3**`
-- `**libcurl**`
-- `**espeak-ng**`
+- **llama.cpp**
+- **Ollama**
+- **GTK3**
+- **libcurl**
+- **espeak-ng**
 
 ## Data flow
 
