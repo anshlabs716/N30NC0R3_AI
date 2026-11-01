@@ -230,29 +230,6 @@ Type a message and press Enter (or click **Send**). Useful commands:
 | `run ls -la` / `$ date`                                        | run a terminal command       |
 | anything else                                                  | routed to the local LLM      |
 
-## Project layout
-
-```
-.
-├── Makefile
-├── README.md
-├── assets/
-│   └── themes.json
-├── models/
-│   └── .gitkeep
-└── src/
-    ├── main.c          application entry point
-    ├── ui.c / ui.h     GTK layout, chat rendering, session list, themes
-    ├── brain.c / .h    intent router (local tools + LLM routing)
-    ├── llm.c / .h      cloud, llama.cpp and Ollama backends, streaming
-    ├── web.c / .h      DuckDuckGo search and HTML parsing
-    ├── ascii_art.c/.h  font, ASCII art and pattern generation
-    ├── tts.c / .h      libespeak-ng speech wrapper
-    ├── storage.c / .h  JSON-backed chat history persistence
-    ├── settings.c / .h settings dialog, themes and preferences
-    └── cJSON.c / .h    embedded JSON library
-```
-
 ## Themes
 
 Themes are defined in `assets/themes.json` and selected from the settings
@@ -266,56 +243,6 @@ Settings and chat history are stored under `~/.neoncore/`:
 - `settings.json` - theme, font size, ASCII style, personality, voice and
   reminder preferences.
 - `history.json` - chat sessions and their messages.
-
-## 📁 Project Files
-
-```text
-N30NC0R3_AI/
-├── .editorconfig
-├── .env.example
-├── .gitattributes
-├── .github/
-├── .gitignore
-├── .markdownlint-cli2.jsonc
-├── assets/
-│   ├── themes.json
-├── CHANGELOG.md
-├── CITATION.cff
-├── CODE_OF_CONDUCT.md
-├── CONTRIBUTING.md
-├── docs/
-├── LICENSE
-├── Makefile
-├── MODEL_CARD.md
-├── models/
-├── PRIVACY.md
-├── README.md
-├── SECURITY.md
-├── src/
-│   ├── ascii_art.c
-│   ├── ascii_art.h
-│   ├── brain.c
-│   ├── brain.h
-│   ├── cJSON.c
-│   ├── cJSON.h
-│   ├── llm.c
-│   ├── llm.h
-│   ├── main.c
-│   ├── settings.c
-│   ├── settings.h
-│   ├── storage.c
-│   ├── storage.h
-│   ├── tts.c
-│   ├── tts.h
-│   ├── ui.c
-│   ├── ui.h
-│   ├── web.c
-│   ├── web.h
-├── SUPPORT.md
-├── THIRD_PARTY_NOTICES.md
-```
-
----
 
 ## 📁 Project Files
 
