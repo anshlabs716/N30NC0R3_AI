@@ -252,44 +252,79 @@ N30NC0R3_AI/
 ├── .env.example
 ├── .gitattributes
 ├── .github/
+│   ├── CODEOWNERS
+│   ├── CONTRIBUTING.md
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml
+│   │   ├── config.yml
+│   │   ├── feature_request.yml
+│   │   └── question.yml
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── release.yml
+│   └── workflows/
+│       ├── ci.yml
+│       ├── links.yml
+│       ├── markdown-lint.yml
+│       ├── release.yml
+│       └── security.yml
 ├── .gitignore
 ├── .markdownlint-cli2.jsonc
+├── assets/
+│   └── themes.json
 ├── CHANGELOG.md
 ├── CITATION.cff
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md
+├── docs/
+│   ├── adr/
+│   │   └── README.md
+│   ├── architecture.md
+│   ├── configuration.md
+│   ├── data-handling.md
+│   ├── dependencies.md
+│   ├── development.md
+│   ├── faq.md
+│   ├── index.md
+│   ├── installation.md
+│   ├── models-and-providers.md
+│   ├── networking.md
+│   ├── releasing.md
+│   ├── resource-requirements.md
+│   ├── security.md
+│   ├── testing.md
+│   ├── third-party-dependencies.md
+│   ├── troubleshooting.md
+│   └── usage.md
 ├── LICENSE
-├── MODEL_CARD.md
 ├── Makefile
+├── MODEL_CARD.md
+├── models/
+│   └── .gitkeep
 ├── PRIVACY.md
 ├── README.md
 ├── SECURITY.md
+├── src/
+│   ├── ascii_art.c
+│   ├── ascii_art.h
+│   ├── brain.c
+│   ├── brain.h
+│   ├── cJSON.c
+│   ├── cJSON.h
+│   ├── llm.c
+│   ├── llm.h
+│   ├── main.c
+│   ├── settings.c
+│   ├── settings.h
+│   ├── storage.c
+│   ├── storage.h
+│   ├── tts.c
+│   ├── tts.h
+│   ├── ui.c
+│   ├── ui.h
+│   ├── web.c
+│   └── web.h
 ├── SUPPORT.md
-├── THIRD_PARTY_NOTICES.md
-├── assets/
-│   └── themes.json
-├── docs/
-├── models/
-└── src/
-    ├── ascii_art.c
-    ├── ascii_art.h
-    ├── brain.c
-    ├── brain.h
-    ├── cJSON.c
-    ├── cJSON.h
-    ├── llm.c
-    ├── llm.h
-    ├── main.c
-    ├── settings.c
-    ├── settings.h
-    ├── storage.c
-    ├── storage.h
-    ├── tts.c
-    ├── tts.h
-    ├── ui.c
-    ├── ui.h
-    ├── web.c
-    └── web.h
+└── THIRD_PARTY_NOTICES.md
 ```
 
 ---
