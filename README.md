@@ -267,6 +267,56 @@ Settings and chat history are stored under `~/.neoncore/`:
   reminder preferences.
 - `history.json` - chat sessions and their messages.
 
+## 📁 Project Files
+
+```text
+N30NC0R3_AI/
+├── .editorconfig
+├── .env.example
+├── .gitattributes
+├── .github/
+├── .gitignore
+├── .markdownlint-cli2.jsonc
+├── assets/
+│   ├── themes.json
+├── CHANGELOG.md
+├── CITATION.cff
+├── CODE_OF_CONDUCT.md
+├── CONTRIBUTING.md
+├── docs/
+├── LICENSE
+├── Makefile
+├── MODEL_CARD.md
+├── models/
+├── PRIVACY.md
+├── README.md
+├── SECURITY.md
+├── src/
+│   ├── ascii_art.c
+│   ├── ascii_art.h
+│   ├── brain.c
+│   ├── brain.h
+│   ├── cJSON.c
+│   ├── cJSON.h
+│   ├── llm.c
+│   ├── llm.h
+│   ├── main.c
+│   ├── settings.c
+│   ├── settings.h
+│   ├── storage.c
+│   ├── storage.h
+│   ├── tts.c
+│   ├── tts.h
+│   ├── ui.c
+│   ├── ui.h
+│   ├── web.c
+│   ├── web.h
+├── SUPPORT.md
+├── THIRD_PARTY_NOTICES.md
+```
+
+---
+
 ## License
 
 Released under the Apache License 2.0.
